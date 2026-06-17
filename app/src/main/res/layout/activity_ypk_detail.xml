@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F7FA"
+    tools:context=".ypk_detail_Activity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:layout_marginTop="20dp">
+
+        <!-- 📌 Название УПК -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Название УПК"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="#546E7A"
+            android:layout_marginBottom="6dp"
+            android:fontFamily="sans-serif-medium"
+            android:textAllCaps="true"
+            android:letterSpacing="0.08" />
+
+        <TextView
+            android:id="@+id/textViewName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="name"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#07A6F3"
+            android:background="#E3F2FD"
+            android:padding="14dp"
+            android:minHeight="48dp"
+            android:gravity="center_vertical" />
+
+        <EditText
+            android:id="@+id/editTextTextName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="text"
+            android:minHeight="48dp"
+            android:hint="Введите название УПК"
+            android:textSize="15sp"
+            android:textColor="#1A1A1A"
+            android:textColorHint="#9E9E9E"
+            android:padding="14dp"
+            android:background="@android:drawable/edit_text"
+            android:visibility="gone"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- 📝 Содержание -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Содержание"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="#546E7A"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="6dp"
+            android:fontFamily="sans-serif-medium"
+            android:textAllCaps="true"
+            android:letterSpacing="0.08" />
+
+        <TextView
+            android:id="@+id/textViewContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="content"
+            android:textSize="15sp"
+            android:textColor="#1A1A1A"
+            android:background="#FFFFFF"
+            android:padding="14dp"
+            android:minHeight="60dp"
+            android:gravity="top|start"
+            android:elevation="2dp" />
+
+        <EditText
+            android:id="@+id/editTextTextContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="textMultiLine"
+            android:minHeight="80dp"
+            android:hint="Введите описание"
+            android:textSize="15sp"
+            android:textColor="#1A1A1A"
+            android:textColorHint="#9E9E9E"
+            android:padding="14dp"
+            android:gravity="top|start"
+            android:background="@android:drawable/edit_text"
+            android:visibility="gone"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- 🔘 Кнопки -->
+        <Button
+            android:id="@+id/buttonSave"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Сохранить"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#4CAF50"
+            android:visibility="gone"
+            android:layout_marginTop="24dp"
+            android:elevation="4dp" />
+
+        <Button
+            android:id="@+id/buttonEdit"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Изменить"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#07A6F3"
+            android:layout_marginTop="12dp"
+            android:elevation="4dp" />
+
+        <Button
+            android:id="@+id/buttonDelete"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Удалить"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#F44336"
+            android:visibility="gone"
+            android:layout_marginTop="12dp"
+            android:elevation="4dp" />
+
+        <Button
+            android:id="@+id/buttonBack"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Назад"
+            android:textSize="16sp"
+            android:textColor="#546E7A"
+            android:backgroundTint="#FFFFFF"
+            android:layout_marginTop="12dp"
+            android:elevation="2dp" />
+
+        <!-- 📦 Заголовок списка -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Продукты в этом УПК"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="#1A1A1A"
+            android:fontFamily="sans-serif-medium"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="10dp"
+            android:paddingStart="4dp" />
+
+        <!-- 📋 RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewProductByUpk"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#FFFFFF"
+            android:padding="8dp"
+            android:clipToPadding="false"
+            android:scrollbars="vertical" />
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

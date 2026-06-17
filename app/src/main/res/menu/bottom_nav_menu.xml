@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/mainFragment"
+        android:icon="@drawable/home"
+        android:title="главная" />
+
+
+    <item
+        android:id="@+id/ordersFragment"
+        android:icon="@drawable/basket"
+        android:title="Заказы" />
+
+    <item
+        android:id="@+id/feedbackFragment"
+        android:icon="@drawable/img"
+        android:title="отзывы" />
+
+
+    <item
+        android:id="@+id/UpkFragment"
+        android:icon="@drawable/info"
+        android:title="упк" />
+
+    <item
+        android:id="@+id/profileFragment"
+        android:icon="@drawable/user"
+        android:title="профиль" />
+
+</menu>

@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8F9FA"
+    tools:context=".user_detail_Activity">
+
+    <!-- 📌 Заголовок страницы (опционально, для красоты) -->
+    <TextView
+        android:id="@+id/pageTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Профиль пользователя"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="#1A1A1A"
+        android:fontFamily="sans-serif-medium"
+        android:padding="20dp"
+        android:background="@drawable/header_background"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:scrollbarStyle="outsideOverlay"
+        app:layout_constraintTop_toBottomOf="@id/pageTitle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- 📋 Карточка профиля -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:contentPadding="20dp"
+                app:cardUseCompatPadding="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- 👤 Имя -->
+                    <ImageView
+                        android:id="@+id/imageView3"
+                        android:layout_width="200dp"
+                        android:layout_height="200dp"
+                        android:src="@drawable/user"
+                        android:layout_margin="10sp"
+                         />
+
+                    <TextView
+                        android:id="@+id/textViewNameLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Имя"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#546E7A"
+                        android:layout_marginBottom="6dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.05" />
+
+                    <TextView
+                        android:id="@+id/textViewName"
+                        style="@style/InfoValue"
+                        android:text="name" />
+
+                    <EditText
+                        android:id="@+id/editTextTextName"
+                        style="@style/StyledInput"
+                        android:hint="Введите имя"
+                        android:inputType="textPersonName"
+                        android:visibility="gone" />
+
+                    <!-- 📱 Телефон -->
+                    <TextView
+                        android:id="@+id/textViewPhoneNumberLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Телефон"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#546E7A"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="6dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.05" />
+
+                    <TextView
+                        android:id="@+id/textViewPhoneNumber"
+                        style="@style/InfoValue"
+                        android:text="TextView" />
+
+                    <EditText
+                        android:id="@+id/editTextPhone"
+                        style="@style/StyledInput"
+                        android:hint="+7 (___) ___-__-__"
+                        android:inputType="phone"
+                        android:visibility="gone"
+                        tools:ignore="SpeakableTextPresentCheck" />
+
+                    <!-- ℹ️ Информация -->
+                    <TextView
+                        android:id="@+id/textViewInfoLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Информация"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#546E7A"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="6dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.05" />
+
+                    <TextView
+                        android:id="@+id/textViewInfo"
+                        style="@style/InfoValue"
+                        android:text="TextView" />
+
+                    <EditText
+                        android:id="@+id/editTextTextInfo"
+                        style="@style/StyledInput"
+                        android:hint="Дополнительная информация"
+                        android:inputType="textMultiLine"
+                        android:minLines="2"
+                        android:gravity="top|start"
+                        android:visibility="gone" />
+
+                    <!-- ✅ Статус активности -->
+                    <TextView
+                        android:id="@+id/textViewIsActiveLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Статус"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#546E7A"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="6dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.05" />
+
+                    <TextView
+                        android:id="@+id/textViewIsActive"
+                        style="@style/InfoValue"
+                        android:text="TextView" />
+
+                    <!-- 🔑 Роль -->
+                    <TextView
+                        android:id="@+id/textViewRoleLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Роль"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#546E7A"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="6dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.05" />
+
+                    <TextView
+                        android:id="@+id/textViewRole"
+                        style="@style/InfoValue"
+                        android:text="role" />
+
+                    <Spinner
+                        android:id="@+id/spinnerRole"
+                        style="@style/StyledSpinner"
+                        android:visibility="gone" />
+
+                    <!-- 🏢 УПК -->
+                    <TextView
+                        android:id="@+id/textViewYpkLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="УПК"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#546E7A"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="6dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.05" />
+
+                    <TextView
+                        android:id="@+id/textViewYpk"
+                        style="@style/InfoValue"
+                        android:text="ypk" />
+
+                    <Spinner
+                        android:id="@+id/spinnerYpk"
+                        style="@style/StyledSpinner"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 🔘 Кнопки управления -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="24dp">
+
+                <Button
+                    android:id="@+id/buttonEdit"
+                    style="@style/PrimaryButton"
+                    android:text="Изменить" />
+
+                <Button
+                    android:id="@+id/buttonSave"
+                    style="@style/SuccessButton"
+                    android:text="Сохранить"
+                    android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/buttonDelete"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Удалить"
+                    android:visibility="gone"
+                    android:backgroundTint="#D32F2F"
+                    android:textColor="#FFFFFF"
+                    android:layout_marginTop="12dp" />
+
+                <Button
+                    android:id="@+id/buttonBack"
+                    style="@style/OutlineButton"
+                    android:text="Назад"
+                    android:layout_marginTop="12dp" />
+            </LinearLayout>
+
+            <!-- Отступ внизу -->
+            <View android:layout_width="match_parent" android:layout_height="24dp" />
+
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

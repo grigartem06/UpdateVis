@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Текст белый, когда кнопка активна -->
+    <item android:color="#FFFFFF" android:state_selected="true" />
+    <!-- Текст серый в обычном состоянии -->
+    <item android:color="#546E7A" />
+</selector>

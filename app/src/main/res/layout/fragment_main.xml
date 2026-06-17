@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8F9FA"
+    tools:context=".MainFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- 📌 Заголовок приложения -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="УПК"
+            android:textColor="#07A6F3"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
+            android:paddingVertical="8dp"
+            android:paddingStart="4dp"
+            android:letterSpacing="0.05" />
+
+        <!-- 🔍 Поле поиска + кнопка -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="8dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp">
+
+            <EditText
+                android:id="@+id/editTextText3"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:inputType="text"
+                android:hint="Поиск товаров..."
+                android:textSize="15sp"
+                android:textColor="#1A1A1A"
+                android:textColorHint="#9E9E9E"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="@android:drawable/edit_text"
+                android:maxLines="1"
+                android:imeOptions="actionSearch" />
+
+            <Button
+                android:id="@+id/buttonSearch"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:text="🔍"
+                android:textSize="18sp"
+                android:minWidth="48dp"
+                android:backgroundTint="#07A6F3"
+                android:textColor="#FFFFFF"
+                android:layout_marginStart="10dp"
+                android:elevation="2dp" />
+        </LinearLayout>
+
+        <!-- 🔘 Фильтры: Все / Заказы / Услуги -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="8dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp">
+
+            <Button
+                android:id="@+id/buttonCheckAll"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:text="Все"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/button_filter_text"
+                android:backgroundTint="@color/button_filter_bg"
+                android:stateListAnimator="@null"
+                android:elevation="2dp" />
+
+            <Button
+                android:id="@+id/buttonCheckOrders"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:text="Заказы"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/button_filter_text"
+                android:backgroundTint="@color/button_filter_bg"
+                android:stateListAnimator="@null"
+                android:layout_marginStart="8dp"
+                android:elevation="2dp" />
+
+            <Button
+                android:id="@+id/buttonCheckServices"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:text="Услуги"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/button_filter_text"
+                android:backgroundTint="@color/button_filter_bg"
+                android:stateListAnimator="@null"
+                android:layout_marginStart="8dp"
+                android:elevation="2dp" />
+        </LinearLayout>
+
+        <!-- ☑️ Чекбокс "Мастерская" -->
+        <CheckBox
+            android:id="@+id/checkBox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Мастерская"
+            android:textSize="14sp"
+            android:textColor="#1A1A1A"
+            android:buttonTint="#07A6F3"
+            android:paddingVertical="8dp"
+            android:paddingStart="4dp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <!-- 📋 Список товаров -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefreshLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewProducts"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="8dp"
+                android:background="#FFFFFF"
+                android:padding="8dp"
+                android:clipToPadding="false"
+                android:scrollbars="vertical"
+                android:scrollbarStyle="outsideOverlay"
+                android:fadeScrollbars="true"
+                android:elevation="2dp" />
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/floatingActionButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:src="@android:drawable/ic_input_add"
+        app:tint="@android:color/white"
+        app:backgroundTint="#07A6F3" />
+
+</FrameLayout>

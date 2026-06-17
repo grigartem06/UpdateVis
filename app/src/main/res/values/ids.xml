@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="textViewAddress" type="id" />
+    <item name="textViewStatus" type="id" />
+    <item name="buttonOrder" type="id" />
+    <item name="textViewRating" type="id" />
+    <item name="textViewType" type="id" />
+    <item name="buttonBack" type="id" />
+</resources>

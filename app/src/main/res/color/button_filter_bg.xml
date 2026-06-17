@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Активное состояние (кнопка выбрана) -->
+    <item android:color="#07A6F3" android:state_selected="true" />
+    <!-- Обычное состояние -->
+    <item android:color="#FFFFFF" />
+</selector>

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8F9FA"
+    tools:context=".ProductDetailActivity">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:scrollbarStyle="outsideOverlay"
+        android:scrollbarThumbVertical="@drawable/scrollbar_thumb"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- ===================== НАЗВАНИЕ ПРОДУКТА ===================== -->
+            <TextView
+                android:id="@+id/textViewProductNameLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Название продукта"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginBottom="6dp"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/textViewProductName"
+                style="@style/InfoCard"
+                android:text="название продукта"
+                android:visibility="visible" />
+
+            <EditText
+                android:id="@+id/editTextProductName"
+                style="@style/InputField"
+                android:hint="Введите название"
+                android:inputType="text"
+                android:visibility="gone" />
+
+            <!-- ===================== ЦЕНА ===================== -->
+            <TextView
+                android:id="@+id/textViewCostLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Цена"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="6dp"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/textViewCost"
+                style="@style/InfoCard"
+                android:text="цена"
+                android:visibility="visible" />
+
+            <EditText
+                android:id="@+id/editTextCost"
+                style="@style/InputField"
+                android:hint="Введите цену"
+                android:inputType="numberDecimal"
+                android:visibility="gone" />
+
+            <!-- ===================== ОПИСАНИЕ ===================== -->
+            <TextView
+                android:id="@+id/textViewProductInfoLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Описание"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="6dp"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/textViewProductInfo"
+                style="@style/InfoCard"
+                android:text="описание"
+                android:visibility="visible" />
+
+            <EditText
+                android:id="@+id/editTextInfo"
+                style="@style/InputField"
+                android:hint="Введите описание"
+                android:inputType="textMultiLine"
+                android:minLines="3"
+                android:gravity="top|start"
+                android:visibility="gone" />
+
+            <!-- ===================== УПК ===================== -->
+            <TextView
+                android:id="@+id/textViewYpkLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="УПК"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="6dp"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/textViewProductYpk"
+                style="@style/InfoCard"
+                android:text="упк"
+                android:visibility="visible" />
+
+            <Spinner
+                android:id="@+id/spinnerYpk"
+                style="@style/InputSpinner"
+                android:visibility="gone" />
+
+            <!-- ===================== ТИП (Товар/Услуга) ===================== -->
+            <TextView
+                android:id="@+id/textViewProductOrServiceLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Тип"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="6dp"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/textViewProductOrService"
+                style="@style/InfoCard"
+                android:text="тип"
+                android:visibility="visible" />
+
+            <CheckBox
+                android:id="@+id/checkBoxIsProduct"
+                style="@style/StyledCheckBox"
+                android:text="Это товар (не услуга)"
+                android:visibility="gone" />
+
+            <!-- ===================== АДРЕС ===================== -->
+            <TextView
+                android:id="@+id/textViewAddressLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Адрес"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="6dp"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/textViewAdress"
+                style="@style/InfoCard"
+                android:text="адрес"
+                android:visibility="visible" />
+
+            <EditText
+                android:id="@+id/editTextAdress"
+                style="@style/InputField"
+                android:hint="Введите адрес"
+                android:inputType="textPostalAddress"
+                android:visibility="gone" />
+
+            <!-- ===================== СТАТУС ===================== -->
+            <TextView
+                android:id="@+id/textViewStatusLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Статус"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="6dp"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/textViewProductStatus"
+                style="@style/InfoCard"
+                android:text="Статус"
+                android:visibility="visible" />
+
+            <Spinner
+                android:id="@+id/spinnerStatus"
+                style="@style/InputSpinner"
+                android:visibility="gone" />
+
+            <!-- ===================== ФОТО ===================== -->
+            <TextView
+                android:id="@+id/textViewPhotoLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Фото"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="6dp"
+                android:fontFamily="sans-serif-medium" />
+
+            <ImageView
+                android:id="@+id/imageViewPhoto"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_gallery"
+                android:contentDescription="Фото продукта"
+                android:layout_gravity="center"
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/image_placeholder_bg"
+                android:padding="12dp"
+                app:shapeAppearanceOverlay="@style/RoundedImage" />
+
+            <!-- ===================== КНОПКИ ===================== -->
+            <Button
+                android:id="@+id/buttonEdit"
+                style="@style/SecondaryButton"
+                android:text="Изменить"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/buttonSave"
+                style="@style/PrimaryButton"
+                android:text="Сохранить"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/buttonOrder"
+                style="@style/PrimaryButton"
+                android:text="Заказать" />
+
+            <Button
+                android:id="@+id/buttonDelete"
+                style="@style/DangerButton"
+                android:text="Удалить"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/buttonBack"
+                style="@style/OutlineButton"
+                android:text="Назад"
+                android:layout_marginTop="8dp" />
+
+            <!-- Отступ внизу для удобства -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="24dp" />
+
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
