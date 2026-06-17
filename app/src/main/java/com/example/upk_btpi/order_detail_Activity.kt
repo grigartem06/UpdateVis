@@ -20,6 +20,9 @@ import com.example.upk_btpi.Retrofit.RetrofitClient
 import com.example.upk_btpi.databinding.ActivityOrderDetailBinding
 import kotlinx.coroutines.launch
 import okhttp3.internal.threadFactory
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class order_detail_Activity : AppCompatActivity() {
 
@@ -57,6 +60,7 @@ class order_detail_Activity : AppCompatActivity() {
         }
 
         binding.editButton.setOnClickListener {
+            binding.editButton.visibility = View.GONE
             if(userRole == "Manager"){
                 binding.textViewCustomersComment.visibility = View.GONE
                 binding.editTextCustomersComment.visibility = View.VISIBLE
@@ -145,16 +149,31 @@ class order_detail_Activity : AppCompatActivity() {
     }
 
     private fun displayOrder(order: OrderDto){
-        //binding.textViewId.text = order.id
-        binding.textViewExecutorId.text = order.executorId
-        binding.textViewCustomerId.text = order.customerId
-        binding.textViewDate.text = order.date
-        binding.textViewStatusName.text = order.statusName
-        binding.textViewUserComment.text = order.userComment
-        binding.textViewCustomersComment.text = order.customersComment
-        binding.textViewProductName.text = order.productDto.productName
+        binding.textViewDate.text ="заказ от:"+formatDate(order.date)
+        binding.textViewStatusName.text ="статус: "+ order.statusName
+        binding.textViewUserComment.text ="комментрий пользователя: "+ order.userComment
+        binding.textViewCustomersComment.text ="комментрий рабочего: "+ order.customersComment
+        binding.textViewProductName.text ="продукт: "+ order.productDto.productName
     }
 
+    // Вспомогательная функция для форматирования даты
+    private fun formatDate(dateString: String?): String {
+        return try {
+            if (dateString.isNullOrEmpty()) return "нет даты создания"
+
+            // Парсим дату из ISO-формата (например: "2024-05-12T14:30:00")
+            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+            val date = inputFormat.parse(dateString)
+
+            // Форматируем в нужный вид: dd:MM:yyyy HH:mm
+            val outputFormat = SimpleDateFormat("dd:MM:yyyy HH:mm", Locale.getDefault())
+            outputFormat.format(date ?: Date())
+
+        } catch (e: Exception) {
+            // Если парсинг не удался — возвращаем исходную строку
+            dateString ?: "нет даты создания"
+        }
+    }
     private fun  saveChanges() {
         val editOrder = UpdateOrderDto(
             id = oldOrder.id,
@@ -168,8 +187,10 @@ class order_detail_Activity : AppCompatActivity() {
                 val response = RetrofitClient.apiService.updateOrder(editOrder)
                 if (response.isSuccessful) {
                     Toast.makeText(this@order_detail_Activity, "успех", Toast.LENGTH_SHORT).show()
+                    recreate()
                 }
                 else{
+
                     Toast.makeText(this@order_detail_Activity, response.errorBody()?.string(), Toast.LENGTH_SHORT).show()
                 }
 

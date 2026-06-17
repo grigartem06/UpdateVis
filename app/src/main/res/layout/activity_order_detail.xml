@@ -26,25 +26,11 @@
             android:layout_marginBottom="16dp"/>
 
         <TextView
-            android:id="@+id/textViewId"
+            android:id="@+id/textViewProductName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="id"
-            android:textSize="16sp"/>
-
-        <TextView
-            android:id="@+id/textViewExecutorId"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="executorId"
-            android:textSize="16sp"/>
-
-        <TextView
-            android:id="@+id/textViewCustomerId"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="customerId"
-            android:textSize="16sp"/>
+            android:text="productName"
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/textViewDate"
@@ -101,13 +87,6 @@
             android:minHeight="48dp"
             android:text="Name"
             android:visibility="gone"/>
-
-        <TextView
-            android:id="@+id/textViewProductName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="productName"
-            android:textSize="16sp"/>
 
         <Button
             android:id="@+id/editButton"
