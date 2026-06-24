@@ -1,5 +1,6 @@
 package com.example.upk_btpi.Models.User
 
+import UserDto
 import com.example.upk_btpi.Models.Role.RoleDto
 import com.google.gson.annotations.SerializedName
 

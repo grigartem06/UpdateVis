@@ -1,9 +1,9 @@
 package com.example.upk_btpi.Adapters
 
+import OrderDto
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.upk_btpi.Models.Order.OrderDto
 import com.example.upk_btpi.databinding.ItemOrderBinding
 import java.text.SimpleDateFormat
 import java.util.Date

@@ -15,10 +15,12 @@ class AuthInterceptor(private val context: Context) : Interceptor {
         // ✅ ЕДИНСТВЕННЫЙ источник prefs
         private var prefs: SharedPreferences? = null
 
-        // ✅ Инициализация (вызвать в Application)
-        fun init(context: Context) { prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE) }
+        // ✅ Инициализация (вызвать в Application или RetrofitClient)
+        fun init(context: Context) {
+            prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        }
 
-        // ✅ ЕДИНСТВЕННЫЙ метод saveTokens - в companion object
+        // ✅ Сохранение токенов
         fun saveTokens(accessToken: String, refreshToken: String) {
             prefs?.edit()?.apply {
                 putString(KEY_ACCESS_TOKEN, accessToken)
@@ -27,33 +29,52 @@ class AuthInterceptor(private val context: Context) : Interceptor {
             }
         }
 
+        // ✅ Получение access токена
         fun getAccessToken(): String? = prefs?.getString(KEY_ACCESS_TOKEN, null)
+
+        // ✅ Получение refresh токена
         fun getRefreshToken(): String? = prefs?.getString(KEY_REFRESH_TOKEN, null)
+
+        // ✅ Очистка токенов (при выходе)
         fun clearTokens() { prefs?.edit()?.clear()?.apply() }
     }
 
-
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
-
-        // Пропускаем эндпоинты аутентификации
         val path = originalRequest.url.encodedPath
-        if (path.contains("/api/Auth/login") ||
-            path.contains("/api/Auth/register") ||
-            path.contains("/api/Auth/refresh")) {
-            return chain.proceed(originalRequest)
+        val method = originalRequest.method
+
+        println("🔍 AuthInterceptor: $method $path")
+
+        // ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: Добавляем Accept: application/json
+        val requestBuilder = originalRequest.newBuilder()
+            .addHeader("Accept", "application/json")  // ← ЭТО КРИТИЧЕСКИ ВАЖНО!
+
+        // Исключаем auth-эндпоинты
+        if (isAuthEndpoint(path)) {
+            println("✅ Auth endpoint excluded: $path")
+            return chain.proceed(requestBuilder.build())
         }
 
-        // Добавляем access token в заголовок
+        // Добавляем токен
         val token = getAccessToken()
-        val requestWithAuth = if (!token.isNullOrEmpty()) {
-            originalRequest.newBuilder()
-                .addHeader("Authorization", "Bearer $token")
-                .build()
-        } else {
-            originalRequest
+        if (!token.isNullOrEmpty()) {
+            println("🔐 Adding Bearer token to: $path")
+            requestBuilder.addHeader("Authorization", "Bearer $token")
         }
 
-        return chain.proceed(requestWithAuth)
+        return chain.proceed(requestBuilder.build())
+    }
+
+    /**
+     * Проверяет, является ли запрос эндпоинтом аутентификации
+     */
+    private fun isAuthEndpoint(path: String): Boolean {
+        return path.contains("/api/auth/login", ignoreCase = true) ||
+                path.contains("/api/auth/register", ignoreCase = true) ||
+                path.contains("/api/auth/refresh", ignoreCase = true) ||
+                path.contains("/api/auth/forgot-password", ignoreCase = true) ||
+                path.contains("/api/auth/reset-password", ignoreCase = true) ||
+                path.contains("/api/auth/logout", ignoreCase = true)
     }
 }

@@ -1,21 +1,14 @@
 package com.example.upk_btpi
 
-
 import android.content.Intent
 import android.os.Bundle
-import android.text.Editable
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import com.example.upk_btpi.Retrofit.AuthRepository
+import com.example.upk_btpi.Utils.ErrorHandler
 import com.example.upk_btpi.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
-
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,6 +17,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -86,42 +80,27 @@ class MainActivity : AppCompatActivity() {
             val result = authRepository.register(fio, phone, password)
 
             result.onSuccess { response ->
-                Toast.makeText(
-                    this@MainActivity, "Регистрация успешна!",
-                    Toast.LENGTH_LONG
-                ).show()
-
-                // Переход на экран SMS с данными пользователя
+                ErrorHandler.showDialog(
+                    context = this@MainActivity,
+                    title = "Регистрация успешна",
+                    message = "Теперь вы можете войти в аккаунт",
+                )
+                // Переход на экран входа
                 val intent = Intent(this@MainActivity, Entry::class.java)
-//                intent.putExtra("user_phone", phone)
-//                intent.putExtra("user_fio", fio)
-                // Можно добавить токен, если он есть: intent.putExtra("token", response.token)
-
                 startActivity(intent)
                 finish()
             }
 
             result.onFailure { error ->
-                val errorMessage = error.message ?: "Неизвестная ошибка"
-
-                // Показываем ошибку в поле ФИО
-//                binding.editTextText.error = errorMessage
-//                binding.editTextText.requestFocus()
-
-                // Дополнительно можно показать Toast (по желанию)
-                Toast.makeText(
-                    this@MainActivity,
-                    "❌ $errorMessage",
-                    Toast.LENGTH_LONG
-                ).show()
-
+                ErrorHandler.showDialog(
+                    context = this@MainActivity,
+                    title = "Ошибка регистрации",
+                    message = error.message ?: "Не удалось зарегистрироваться",
+                )
                 // Разблокируем кнопку при ошибке, чтобы пользователь мог повторить
                 binding.button.isEnabled = true
                 binding.button.text = "Зарегистрироваться"
             }
-
         }
     }
 }
-
-

@@ -1,5 +1,6 @@
 package com.example.upk_btpi
 
+import UserDto
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -8,25 +9,19 @@ import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.core.animateDecay
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.upk_btpi.Models.Role.RoleDto
-import com.example.upk_btpi.Models.User.UpdateUserDto
-import com.example.upk_btpi.Models.User.UpdateUserForAdminDto
-import com.example.upk_btpi.Models.User.UserDto
 import com.example.upk_btpi.Models.Ypk.YpksDto
 import com.example.upk_btpi.Retrofit.AuthRepository
 import com.example.upk_btpi.Retrofit.RetrofitClient
+import com.example.upk_btpi.Utils.ErrorHandler  // ✅ Импорт обработчика ошибок
 import com.example.upk_btpi.databinding.ActivityUserDetailBinding
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
@@ -36,59 +31,99 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
 class user_detail_Activity : AppCompatActivity() {
+
+    // ✅ ViewBinding для безопасной работы с UI
     private lateinit var binding: ActivityUserDetailBinding
+
+    // ✅ Данные пользователя и репозиторий
     private lateinit var oldUser: UserDto
-    private  var selectedUserId: String?=null
+    private var selectedUserId: String? = null
     private val authRepository = AuthRepository()
+
+    // ✅ Флаги и списки для работы с ролями и УПК
     private var EditMode: Boolean = false
-    private var listOfRoles:List<RoleDto> = emptyList()
-    private var listOfYpk:  List<YpksDto> = emptyList()
-    private var selectedRole: String?=null
-    private var selectedYpk: String?=null
-    private var selectedImageUri: Uri?=null
-    private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent())
-    { uri: Uri ?-> uri?.let { selectedImageUri = it;  binding.imageView3.setImageURI(it) } }
+    private var listOfRoles: List<RoleDto> = emptyList()
+    private var listOfYpk: List<YpksDto> = emptyList()
+    private var selectedRole: String? = null
+    private var selectedYpk: String? = null
 
-
+    // ✅ Переменные для работы с изображением аватара
+    private var selectedImageUri: Uri? = null
+    private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+            binding.imageView3.setImageURI(it)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Инициализация ViewBinding
         binding = ActivityUserDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        //получение данных из SharedPreferences
+        // 🔹 Получаем ID пользователя из SharedPreferences
         val userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE)
         selectedUserId = userPrefs.getString("selected_user_id", null)
 
-        //проверка на получение данных
-        if(selectedUserId.isNullOrEmpty()) {finish();return}
+        // ✅ Проверка: найден ли ID пользователя
+        if (selectedUserId.isNullOrEmpty()) {
+            ErrorHandler.showDialog(
+                context = this,
+                title = "Ошибка",
+                message = "ID пользователя не найден. Попробуйте выбрать пользователя заново.",
+            )
+            finish()
+            return
+        }
 
+        // 🔹 Загружаем данные пользователя
         getInfAboutUser(selectedUserId.toString())
 
-        binding.buttonBack.setOnClickListener { back()}
-        binding.buttonEdit.setOnClickListener { edit()}
-        binding.buttonSave.setOnClickListener { save()}
+        // 🔹 Обработчики кнопок
+        binding.buttonBack.setOnClickListener { back() }
+        binding.buttonEdit.setOnClickListener { edit() }
+        binding.buttonSave.setOnClickListener { save() }
         binding.buttonDelete.setOnClickListener { delete() }
-        binding.imageView3.setOnClickListener{selectImage()}
-
+        binding.imageView3.setOnClickListener { selectImage() }
     }
 
+    /**
+     * Загружает данные пользователя по ID из API и отображает их в UI
+     */
     private fun getInfAboutUser(userId: String) {
-        //получаем данные из апи
         lifecycleScope.launch {
-            var result = authRepository.getUserByID(userId)
-            result.onSuccess {user->oldUser= user; displayUserInf(user)  }
-            result.onFailure { Toast.makeText(this@user_detail_Activity, "❌ Ошибка получения данных", Toast.LENGTH_SHORT).show() }
+            val result = authRepository.getUserByID(userId)
+
+            result.onSuccess { user ->
+                oldUser = user
+                displayUserInf(user)  // Успех: отображаем данные
+            }
+
+            result.onFailure { error ->
+                // Ошибка API: показываем понятное сообщение
+                ErrorHandler.showDialog(
+                    context = this@user_detail_Activity,
+                    title = "Ошибка загрузки",
+                    message = error.message ?: "Не удалось загрузить данные пользователя",
+                )
+            }
         }
     }
 
+    /**
+     * Отображает данные пользователя в TextView
+     * @param user Данные пользователя из API
+     */
     private fun displayUserInf(user: UserDto) {
-        if(oldUser.role.roleName != "Admin") {
+        // ✅ Показываем кнопку удаления только если пользователь не Admin
+        if (oldUser.role != "Admin") {
             binding.buttonDelete.visibility = View.VISIBLE
         }
 
-        // ✅ Загружаем аватар, если есть URL
+        // ✅ Загружаем аватар через Glide, если есть URL
         if (!user.avatarUrl.isNullOrEmpty()) {
             Glide.with(this)
                 .load(user.avatarUrl)
@@ -96,114 +131,116 @@ class user_detail_Activity : AppCompatActivity() {
                 .error(android.R.drawable.ic_menu_report_image)
                 .centerCrop()
                 .into(binding.imageView3)
-        } else { }
+        }
 
         if (EditMode) {
-            // ✅ В режиме редактирования заполняем EditText
-            binding.editTextTextName.setText(user.fullname ?: "")
+            // 🔹 РЕЖИМ РЕДАКТИРОВАНИЯ: заполняем EditText
+            binding.editTextTextName.setText(user.fullName ?: "")
             binding.editTextPhone.setText(user.phoneNumber ?: "")
             binding.editTextTextInfo.setText(user.userInfo ?: "")
         } else {
-            // ✅ В режиме просмотра показываем TextView
-            binding.textViewName.text = user.fullname ?: "Без имени"
+            // 🔹 РЕЖИМ ПРОСМОТРА: показываем TextView
+            binding.textViewName.text = user.fullName ?: "Без имени"
             binding.textViewPhoneNumber.text = user.phoneNumber ?: "Нет телефона"
             binding.textViewInfo.text = user.userInfo ?: "Нет информации"
-            binding.textViewIsActive.text = if (user.isActive) "✅ Активный" else "❌ Не активен"
+            //binding.textViewIsActive.text = if (user.isActive) "✅ Активный" else "❌ Не активен"
 
-            // ✅ ИСПРАВЛЕНО: безопасный доступ к nullable ypk
-            binding.textViewYpk.text = user.ypk?.ypkName ?: "Не назначен"
-            // ❌ УДАЛИТЕ эту строку — она дублирует логику и вызывает краш:
-            // if(user.ypk.id == null) {binding.textViewYpk.text= "Не назначен"}
-            // else{binding.textViewYpk.text = user.ypk?.ypkName }
+            // ✅ Безопасный доступ к nullable ypk
+           // binding.textViewYpk.text = user.ypk?.ypkName ?: "Не назначен"
 
-            // ✅ ИСПРАВЛЕНО: безопасный доступ к nullable role
-            binding.textViewRole.text = user.role?.roleName ?: "Не назначена"
+            // ✅ Безопасный доступ к nullable role
+            binding.textViewRole.text = user.role ?: "Не назначена"
         }
     }
 
+    /**
+     * Включает режим редактирования: показывает поля ввода и загружает списки для спиннеров
+     */
     private fun edit() {
-        EditMode= true
-        // отображаем поля ввода
+        EditMode = true
+
+        // 🔹 Показываем поля ввода
         binding.editTextTextName.visibility = View.VISIBLE
         binding.editTextPhone.visibility = View.VISIBLE
         binding.editTextTextInfo.visibility = View.VISIBLE
-        binding.spinnerYpk.visibility= View.VISIBLE
-        binding.spinnerRole.visibility= View.VISIBLE
+        binding.spinnerYpk.visibility = View.VISIBLE
+        binding.spinnerRole.visibility = View.VISIBLE
 
+        // 🔹 Загружаем списки ролей и УПК для спиннеров
         loadSpiners()
 
-        //скрываем поля вывода
+        // 🔹 Скрываем TextView (режим просмотра)
         binding.textViewName.visibility = View.GONE
         binding.textViewPhoneNumber.visibility = View.GONE
         binding.textViewInfo.visibility = View.GONE
         binding.textViewYpk.visibility = View.GONE
         binding.textViewRole.visibility = View.GONE
 
-        //выводим данные
+        // 🔹 Заполняем поля текущими данными
         displayUserInf(oldUser)
 
-        //скрываем кнопки
+        // 🔹 Переключаем кнопки
         binding.buttonEdit.visibility = View.GONE
-        //раскрываем кнопки
         binding.buttonSave.visibility = View.VISIBLE
-
         binding.buttonBack.text = "отменить"
     }
 
+    /**
+     * Сохраняет изменения пользователя через API с поддержкой multipart-запроса
+     */
     private fun save() {
         lifecycleScope.launch {
             try {
+                // 🔹 Получаем и валидируем данные из полей ввода
                 val fullname = binding.editTextTextName.text.toString().trim()
                 val phoneNumber = binding.editTextPhone.text.toString().trim()
                 val userInfo = binding.editTextTextInfo.text.toString().trim()
 
+                // ✅ Inline-валидация: показываем ошибку прямо в поле
                 if (fullname.isEmpty()) {
-                    Toast.makeText(this@user_detail_Activity, "⚠️ Введите имя", Toast.LENGTH_SHORT).show()
+                    binding.editTextTextName.error = "Введите имя"
+                    binding.editTextTextName.requestFocus()
                     return@launch
                 }
                 if (phoneNumber.isEmpty()) {
-                    Toast.makeText(this@user_detail_Activity, "⚠️ Введите телефон", Toast.LENGTH_SHORT).show()
+                    binding.editTextPhone.error = "Введите телефон"
+                    binding.editTextPhone.requestFocus()
                     return@launch
                 }
 
-                // ✅ Проверяем доступ к УПК
+                // 🔹 Определяем, имеет ли выбранная роль доступ к УПК
                 val currentRole = listOfRoles.find { it.id == selectedRole }
                 val roleName = currentRole?.roleName?.lowercase()?.trim()
                 val rolesWithYpkAccess = setOf("менеджер", "manager", "исполнитель", "executor")
                 val hasYpkAccess = roleName in rolesWithYpkAccess
 
-                // ✅ Получаем ID УПК
+                // 🔹 Получаем ID УПК (только если роль имеет доступ)
                 val ypkIdValue = if (hasYpkAccess) {
                     val selectedPosition = binding.spinnerYpk.selectedItemPosition
                     if (selectedPosition >= 0 && selectedPosition < listOfYpk.size) {
                         listOfYpk[selectedPosition].id
                     } else {
-                        oldUser.ypk?.id
+                        //oldUser.ypk?.id  // Fallback на текущий УПК
                     }
                 } else {
-                    null
+                    null  // Для ролей без доступа к УПК передаём null
                 }
 
-                // ✅ Создаем RequestBody для каждого поля
+                // 🔹 Создаём RequestBody для текстовых полей (требуется для multipart)
                 val idBody = oldUser.id.toRequestBody("text/plain".toMediaType())
                 val fullnameBody = fullname.toRequestBody("text/plain".toMediaType())
                 val phoneNumberBody = phoneNumber.toRequestBody("text/plain".toMediaType())
-                val roleIdBody = (selectedRole ?: oldUser.role?.id ?: "").toRequestBody("text/plain".toMediaType())
-
-                // ✅ ИСПРАВЛЕНО: userInfoBody всегда будет RequestBody
+                //val roleIdBody = (selectedRole ?: oldUser.role?.id ?: "").toRequestBody("text/plain".toMediaType())
                 val userInfoBody = (if (userInfo.isEmpty()) oldUser.userInfo ?: "" else userInfo)
                     .toRequestBody("text/plain".toMediaType())
+                //val ypkIdBody = (ypkIdValue ?: "").toRequestBody("text/plain".toMediaType())
 
-                val ypkIdBody = (ypkIdValue ?: "").toRequestBody("text/plain".toMediaType())
-
-                // ✅ Создаем MultipartBody.Part для аватара
+                // 🔹 Создаём MultipartBody.Part для аватара (если выбрано новое изображение)
                 val avatarPart = selectedImageUri?.let { uri ->
                     try {
                         val inputStream = contentResolver.openInputStream(uri)
                         val tempFile = File.createTempFile("avatar_", ".jpg", cacheDir)
-                        tempFile.outputStream().use { output ->
-                            inputStream?.copyTo(output)
-                        }
+                        tempFile.outputStream().use { output -> inputStream?.copyTo(output) }
                         val requestBody = tempFile.asRequestBody("image/jpeg".toMediaType())
                         MultipartBody.Part.createFormData("Avatar", tempFile.name, requestBody)
                     } catch (e: Exception) {
@@ -216,35 +253,39 @@ class user_detail_Activity : AppCompatActivity() {
                 println("🔍 save(): role='$roleName', ypkId=$ypkIdValue, есть фото: ${avatarPart != null}")
                 println("📤 Отправка multipart данных...")
 
-                // ✅ Вызываем API (без !!)
-                val response = RetrofitClient.apiService.updateUserForAdmin(
-                    id = idBody,
-                    fullname = fullnameBody,
-                    phoneNumber = phoneNumberBody,
-                    roleId = roleIdBody,
-                    userInfo = userInfoBody,  // ← Теперь без !!
-                    ypkId = ypkIdBody,
-                    avatar = avatarPart
-                )
+//                // ✅ Вызываем API для обновления пользователя
+//                val response = RetrofitClient.apiService.updateUserForAdmin(
+//                    id = idBody,
+//                    fullname = fullnameBody,
+//                    phoneNumber = phoneNumberBody,
+//                    roleId = roleIdBody,
+//                    userInfo = userInfoBody,
+//                    ypkId = ypkIdBody,
+//                    avatar = avatarPart
+//                )
 
-                if (response.isSuccessful) {
-                    Toast.makeText(this@user_detail_Activity, "✅ Изменения сохранены", Toast.LENGTH_SHORT).show()
-
-                    val updatedResult = authRepository.getUserByID(oldUser.id)
-                    updatedResult.onSuccess { updatedUser ->
-                        oldUser = updatedUser
-                    }
-                } else {
-                    val error = response.errorBody()?.string() ?: "Неизвестная ошибка"
-                    println("❌ ОШИБКА: ${response.code()} - $error")
-                    Toast.makeText(this@user_detail_Activity, "❌ Ошибка: $error", Toast.LENGTH_LONG).show()
-                    return@launch
-                }
+//                if (response.isSuccessful) {
+//                    // Успех: показываем диалог и обновляем данные
+//                    ErrorHandler.showDialog(
+//                        context = this@user_detail_Activity,
+//                        title = "Успех",
+//                        message = "✅ Изменения сохранены",
+//                    )
+//                    val updatedResult = authRepository.getUserByID(oldUser.id)
+//                    updatedResult.onSuccess { updatedUser -> oldUser = updatedUser }
+//                } else {
+//                    // Ошибка API: показываем понятное сообщение
+//                    ErrorHandler.showDialog(
+//                        context = this@user_detail_Activity,
+//                        title = "Ошибка сохранения",
+//                        message = ErrorHandler.handleApiError(response),
+//                    )
+//                    return@launch
+//                }
 
             } catch (e: Exception) {
-                println("❌ ИСКЛЮЧЕНИЕ: ${e.message}")
-                e.printStackTrace()
-                Toast.makeText(this@user_detail_Activity, "❌ ${e.message}", Toast.LENGTH_SHORT).show()
+                // Сетевая или системная ошибка
+                ErrorHandler.showErrorWithMessage(this@user_detail_Activity, e)
                 return@launch
             }
 
@@ -270,28 +311,57 @@ class user_detail_Activity : AppCompatActivity() {
         }
     }
 
-
+    /**
+     * Возврат: отменяет редактирование или закрывает активность
+     */
     private fun back() {
-        if(EditMode){EditMode= false; displayUserInf(oldUser)}
-        else{finish()}
-    }
-
-    private fun loadSpiners(){
-        lifecycleScope.launch {
-            try {
-                var responseYpk = RetrofitClient.apiService.getAllYpk()
-                var responseRoles = RetrofitClient.apiService.getAllRoles()
-
-                if(responseRoles.isSuccessful && responseRoles.body()!=null) {listOfRoles=responseRoles.body()!!.roles; setupRoleSpinner()}
-                else{}
-
-                if(responseYpk.isSuccessful && responseYpk.body()!=null) {listOfYpk=responseYpk.body()!!.ypks; setupYpkSpinner()}
-                else{}
-
-            }catch (e: Exception) {}
+        if (EditMode) {
+            EditMode = false
+            displayUserInf(oldUser)
+        } else {
+            finish()
         }
     }
 
+    /**
+     * Загружает списки ролей и УПК для спиннеров
+     */
+    private fun loadSpiners() {
+        lifecycleScope.launch {
+            try {
+                val responseYpk = RetrofitClient.apiService.getAllYpk()
+                val responseRoles = RetrofitClient.apiService.getAllRoles()
+
+                if (responseRoles.isSuccessful && responseRoles.body() != null) {
+                    listOfRoles = responseRoles.body()!!.roles
+                    setupRoleSpinner()
+                } else {
+                    ErrorHandler.showDialog(
+                        context = this@user_detail_Activity,
+                        title = "Ошибка загрузки",
+                        message = ErrorHandler.handleApiError(responseRoles),
+                    )
+                }
+
+                if (responseYpk.isSuccessful && responseYpk.body() != null) {
+                    listOfYpk = responseYpk.body()!!.ypks
+                    setupYpkSpinner()
+                } else {
+                    ErrorHandler.showDialog(
+                        context = this@user_detail_Activity,
+                        title = "Ошибка загрузки",
+                        message = ErrorHandler.handleApiError(responseYpk),
+                    )
+                }
+            } catch (e: Exception) {
+                ErrorHandler.showErrorWithMessage(this@user_detail_Activity, e)
+            }
+        }
+    }
+
+    /**
+     * Настраивает спиннер со списком УПК
+     */
     private fun setupYpkSpinner() {
         if (listOfYpk.isEmpty()) {
             println("⚠️ listOfYpk пуст, пропускаем setupYpkSpinner")
@@ -305,31 +375,29 @@ class user_detail_Activity : AppCompatActivity() {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spinnerYpk.adapter = adapter
 
-        // ✅ Устанавливаем дефолтное значение по ID (не по имени!)
-        oldUser?.let { user ->
-            val userYpkId = user.ypk?.id
-            println("👤 УПК пользователя: $userYpkId")
+//        // ✅ Устанавливаем текущий УПК пользователя по ID
+//        oldUser?.let { user ->
+//            val userYpkId = user.ypk?.id
+//            println("👤 УПК пользователя: $userYpkId")
+//
+//            if (userYpkId != null) {
+//                val currentYpkIndex = listOfYpk.indexOfFirst { it.id == userYpkId }
+//                if (currentYpkIndex >= 0) {
+//                    binding.spinnerYpk.setSelection(currentYpkIndex)
+//                    selectedYpk = listOfYpk[currentYpkIndex].id  // ✅ Сохраняем ID!
+//                    println("✅ Установлен УПК: ${listOfYpk[currentYpkIndex].ypkName}")
+//                } else {
+//                    println("⚠️ УПК $userYpkId не найден в списке")
+//                }
+//            }
+//        }
 
-            if (userYpkId != null) {
-                val currentYpkIndex = listOfYpk.indexOfFirst { it.id == userYpkId }
-
-                if (currentYpkIndex >= 0) {
-                    binding.spinnerYpk.setSelection(currentYpkIndex)
-                    selectedYpk = listOfYpk[currentYpkIndex].id  // ✅ Сохраняем ID!
-                    println("✅ Установлен УПК: ${listOfYpk[currentYpkIndex].ypkName}")
-                } else {
-                    println("⚠️ УПК $userYpkId не найден в списке")
-                }
-            }
-        }
-
-        // ✅ Обработчик выбора
+        // ✅ Обработчик выбора нового УПК
         binding.spinnerYpk.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 selectedYpk = listOfYpk[position].id  // ✅ Сохраняем ID при выборе
                 println("🔄 Выбран УПК: ${listOfYpk[position].ypkName} (ID: $selectedYpk)")
             }
-
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 selectedYpk = null
                 println("⚠️ Ничего не выбрано в spinnerYpk")
@@ -337,7 +405,9 @@ class user_detail_Activity : AppCompatActivity() {
         }
     }
 
-
+    /**
+     * Настраивает спиннер со списком ролей
+     */
     private fun setupRoleSpinner() {
         if (listOfRoles.isEmpty()) return
 
@@ -346,24 +416,22 @@ class user_detail_Activity : AppCompatActivity() {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spinnerRole.adapter = adapter
 
-        // Устанавливаем текущую роль
-        val currentUserRoleId = oldUser.role?.id
+        // ✅ Устанавливаем текущую роль пользователя
+        val currentUserRoleId = oldUser.role
         if (currentUserRoleId != null) {
             val currentRoleIndex = listOfRoles.indexOfFirst { it.id == currentUserRoleId }
             if (currentRoleIndex >= 0) {
                 binding.spinnerRole.setSelection(currentRoleIndex)
                 selectedRole = listOfRoles[currentRoleIndex].id
-                // ✅ Обновляем видимость УПК
-                setupYpkVisibility(selectedRole)
+                setupYpkVisibility(selectedRole)  // ✅ Обновляем видимость УПК
             }
         }
 
-        // Обработчик выбора
+        // ✅ Обработчик выбора новой роли
         binding.spinnerRole.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 selectedRole = listOfRoles[position].id
-                // ✅ Обновляем видимость УПК при смене роли
-                setupYpkVisibility(selectedRole)
+                setupYpkVisibility(selectedRole)  // ✅ Обновляем видимость УПК при смене роли
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 selectedRole = null
@@ -372,17 +440,18 @@ class user_detail_Activity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Показывает или скрывает поле УПК в зависимости от выбранной роли
+     * Только роли "менеджер", "manager", "исполнитель", "executor" имеют доступ к УПК
+     */
     private fun setupYpkVisibility(roleId: String?) {
         if (roleId == null) {
             hideYpkFields()
             return
         }
 
-        // Находим роль по ID в загруженном списке
         val currentRole = listOfRoles.find { it.id == roleId }
         val roleName = currentRole?.roleName?.lowercase()?.trim()
-
-        // ✅ Проверяем по имени роли (не по ID!)
         val rolesWithYpkAccess = setOf("менеджер", "manager", "исполнитель", "executor")
         val hasYpkAccess = roleName in rolesWithYpkAccess
 
@@ -392,7 +461,6 @@ class user_detail_Activity : AppCompatActivity() {
         else { hideYpkFields() }
     }
 
-    // Выносим логику отображения в отдельные методы
     private fun showYpkFields() {
         binding.spinnerYpk.visibility = View.VISIBLE
         binding.textViewYpk?.visibility = View.VISIBLE
@@ -404,54 +472,85 @@ class user_detail_Activity : AppCompatActivity() {
         selectedYpk = null  // Сбрасываем выбор
     }
 
+    /**
+     * Показывает диалог подтверждения удаления пользователя
+     */
     private fun delete() {
         AlertDialog.Builder(this)
-            .setTitle("Удаление упк")
+            .setTitle("Удаление пользователя")
             .setMessage("Вы уверены, что хотите удалить этого пользователя? Это действие нельзя отменить.")
             .setPositiveButton("Удалить") { _, _ -> performDeleteUpk(selectedUserId!!) }
-            .setNegativeButton("Отмена", null).show()
+            .setNegativeButton("Отмена", null)
+            .show()
     }
 
+    /**
+     * Выполняет удаление пользователя через API
+     */
     private fun performDeleteUpk(selectedUpkId: String) {
         lifecycleScope.launch {
             try {
                 println("🗑️ Удаление пользователя: $selectedUpkId")
                 val response = RetrofitClient.apiService.deleteUserByID(selectedUpkId)
                 println("📥 Ответ сервера: ${response.code()}")
+
                 if (response.isSuccessful) {
-                    println("✅ пользователь удалён")
-                    Toast.makeText(this@user_detail_Activity, "✅ пользователь удалён", Toast.LENGTH_SHORT).show()
+                    println("✅ Пользователь удалён")
+                    ErrorHandler.showDialog(
+                        context = this@user_detail_Activity,
+                        title = "Удалено",
+                        message = "✅ Пользователь успешно удалён",
+                    )
                     finish()
                 } else {
                     val error = response.errorBody()?.string() ?: "Неизвестная ошибка"
                     println("❌ ОШИБКА: ${response.code()} - $error")
-                    Toast.makeText(this@user_detail_Activity, "❌ Ошибка: $error", Toast.LENGTH_LONG).show()
+                    ErrorHandler.showDialog(
+                        context = this@user_detail_Activity,
+                        title = "Ошибка удаления",
+                        message = ErrorHandler.handleApiError(response),
+                    )
                 }
             } catch (e: Exception) {
                 println("❌ ИСКЛЮЧЕНИЕ: ${e.message}")
                 e.printStackTrace()
-                Toast.makeText(this@user_detail_Activity, "❌ ${e.message}", Toast.LENGTH_SHORT).show()
+                ErrorHandler.showErrorWithMessage(this@user_detail_Activity, e)
             }
         }
     }
 
-    private fun selectImage(){
-        if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2){
-            if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
-            { ActivityCompat.requestPermissions(this,arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),100) }
-            else { imagePickerLauncher.launch("image/*") }
+    /**
+     * Запускает выбор изображения с проверкой прав доступа для Android 12 и ниже
+     */
+    private fun selectImage() {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                    100
+                )
+            } else {
+                imagePickerLauncher.launch("image/*")
+            }
+        } else {
+            imagePickerLauncher.launch("image/*")
         }
-        else{imagePickerLauncher.launch("image/*")}
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if(requestCode ==100){
-            if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            { imagePickerLauncher.launch("image/*") }
-            else
-            {Toast.makeText(this, "⚠️ Требуется разрешение для выбора фото", Toast.LENGTH_SHORT).show()}
+        if (requestCode == 100) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                imagePickerLauncher.launch("image/*")
+            } else {
+                ErrorHandler.showDialog(
+                    context = this,
+                    title = "Разрешение",
+                    message = "Требуется доступ к галерее для выбора фото",
+                )
+            }
         }
     }
-
 }

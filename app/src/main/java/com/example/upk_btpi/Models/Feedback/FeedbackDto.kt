@@ -1,6 +1,6 @@
 package com.example.upk_btpi.Models.Feedback
 
-import com.example.upk_btpi.Models.User.UserDto
+import UserDto
 import com.google.gson.annotations.SerializedName
 
 data class FeedbackDto(

@@ -3,133 +3,141 @@ package com.example.upk_btpi
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import com.example.upk_btpi.Models.Auth.AuthResponse
 import com.example.upk_btpi.Models.Auth.RefreshTokenRequest
 import com.example.upk_btpi.Retrofit.AuthInterceptor
 import com.example.upk_btpi.Retrofit.AuthRepository
 import com.example.upk_btpi.Retrofit.RetrofitClient
+import com.example.upk_btpi.Utils.ErrorHandler
 import com.example.upk_btpi.Utils.JwtDecoder
 import kotlinx.coroutines.launch
 
 class LoadActivity : AppCompatActivity() {
+
     private val authRepository = AuthRepository()
+    private lateinit var prefs: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_load)
 
+        // ✅ Инициализация (обязательно перед любыми API-запросами)
+        AuthInterceptor.init(applicationContext)
+        RetrofitClient.init(applicationContext)
+        prefs = getSharedPreferences("auth_prefs", MODE_PRIVATE)
+
+        // ✅ Проверка интернета
+        if (!ErrorHandler.isInternetAvailable(this)) {
+            ErrorHandler.showDialog(
+                context = this,
+                title = "Нет подключения",
+                message = "Проверьте Wi-Fi или мобильные данные",
+                onPositive = { finish() }
+            )
+            return
+        }
+
+        // ✅ Настройка отступов для системных панелей
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        // Инициализация
-        AuthInterceptor.init(applicationContext)
-        RetrofitClient.init(applicationContext)
+        // ✅ Запускаем проверку авторизации
+        checkAuthAndNavigate()
+    }
 
-        // ✅ Проверяем сохранённый вход
-        val prefs = getSharedPreferences("auth_prefs", MODE_PRIVATE)
+    /**
+     * Основная логика проверки авторизации и навигации
+     */
+    private fun checkAuthAndNavigate() {
         val rememberMe = prefs.getBoolean("remember_me", false)
 
-        if (rememberMe) {
-            // ✅ Сначала пробуем обновить токен через refresh token
-            val refreshToken = AuthInterceptor.getRefreshToken()
-            val accessToken = AuthInterceptor.getAccessToken()
-
-            if (!refreshToken.isNullOrEmpty()) {
-                // Есть refresh token — пробуем обновить
-                lifecycleScope.launch {
-                    tryRefreshToken(refreshToken)
-                }
-            } else if (!accessToken.isNullOrEmpty()) {
-                // Есть только access token — проверяем его валидность
-                lifecycleScope.launch {
-                    checkTokenValidityAndProceed()
-                }
-            } else {
-                // Нет токенов — пробуем войти по сохранённым учётным данным
-                tryLoginWithSavedCredentials(prefs)
-            }
-        } else {
-            // "Запомнить меня" не включено — идём на экран входа
+        if (!rememberMe) {
             goToEntry()
+            return
+        }
+
+        val accessToken = AuthInterceptor.getAccessToken()
+        val refreshToken = AuthInterceptor.getRefreshToken()
+
+        when {
+            // ✅ Есть refresh token — пробуем обновить
+            !refreshToken.isNullOrEmpty() -> {
+                lifecycleScope.launch { tryRefreshToken(refreshToken) }
+            }
+            // ✅ Есть access token — проверяем его валидность
+            !accessToken.isNullOrEmpty() -> {
+                lifecycleScope.launch { checkTokenValidity(accessToken) }
+            }
+            // ✅ Нет токенов — пробуем войти по сохранённым данным
+            else -> {
+                tryLoginWithSavedCredentials()
+            }
         }
     }
 
-    // ✅ Попытка обновить токен через refresh token
+    /**
+     * Попытка обновить токен через refresh token
+     */
     private suspend fun tryRefreshToken(refreshToken: String) {
         try {
-            println("🔄 Попытка обновления токена через refresh token...")
+            println("🔄 Обновление токена...")
 
-            val response = RetrofitClient.apiService.refreshAccessToken(
+            // ✅ Используем новый эндпоинт loginViaToken
+            val response = RetrofitClient.apiService.loginViaToken(
                 RefreshTokenRequest(refreshToken)
             )
 
             if (response.isSuccessful && response.body() != null) {
                 val newAuth = response.body()!!
-                // Сохраняем новые токены
+
+                // ✅ Сохраняем новые токены
                 AuthInterceptor.saveTokens(
-                    newAuth.accessToken ?: "",
-                    newAuth.refreshToken ?: refreshToken
+                    accessToken = newAuth.accessToken ?: "",
+                    refreshToken = newAuth.refreshToken ?: refreshToken
                 )
-                println("✅ Токен успешно обновлён")
+
+                println("✅ Токен обновлён")
+                saveUserData(newAuth.accessToken ?: "")
                 goToMainPage()
+
             } else {
-                println("❌ Не удалось обновить токен (код: ${response.code()})")
-                // Refresh token истёк — пробуем войти по учётным данным
-                val prefs = getSharedPreferences("auth_prefs", MODE_PRIVATE)
-                tryLoginWithSavedCredentials(prefs)
+                println("❌ Ошибка обновления: ${response.code()}")
+                // Refresh token истёк — пробуем войти по логину/паролю
+                tryLoginWithSavedCredentials()
             }
         } catch (e: Exception) {
-            println("❌ Ошибка при обновлении токена: ${e.message}")
-            // Ошибка сети или другая — пробуем войти по учётным данным
-            val prefs = getSharedPreferences("auth_prefs", MODE_PRIVATE)
-            tryLoginWithSavedCredentials(prefs)
+            println("❌ Исключение: ${e.message}")
+            tryLoginWithSavedCredentials()
         }
     }
 
-    // ✅ Проверка валидности текущего access token
-    // ✅ Проверка валидности текущего access token
-    private suspend fun checkTokenValidityAndProceed() {
+    /**
+     * Проверка валидности access token через декодирование JWT
+     */
+    private suspend fun checkTokenValidity(accessToken: String) {
         try {
-            val accessToken = AuthInterceptor.getAccessToken() ?: run {
-                goToEntry()
-                return
-            }
-
-            // Декодируем токен и проверяем, не истёк ли он
             val claims = JwtDecoder.decode(accessToken)
-
-            // ✅ ИСПРАВЛЕНО: правильно получаем exp (может быть Long или String)
-            val exp = when (val expValue = claims["exp"]) {
-                is Long -> expValue
-                is String -> expValue.toLongOrNull()
-                is Number -> expValue.toLong()
-                else -> null
-            }
-
+            val exp = claims["exp"]?.toString()?.toLongOrNull()
             val currentTime = System.currentTimeMillis() / 1000
 
             if (exp != null && exp > currentTime) {
-                // Токен действителен
-                println("✅ Access token действителен (истекает: ${exp})")
+                println("✅ Токен действителен")
+                saveUserData(accessToken)  // ✅ Сохраняем данные пользователя
                 goToMainPage()
             } else {
-                println("⚠️ Access token истёк или некорректен")
-                // Токен истёк — пробуем обновить через refresh
+                println("⚠️ Токен истёк")
                 val refreshToken = AuthInterceptor.getRefreshToken()
                 if (!refreshToken.isNullOrEmpty()) {
                     tryRefreshToken(refreshToken)
                 } else {
-                    // Нет refresh token — идём на вход
                     goToEntry()
                 }
             }
@@ -139,77 +147,76 @@ class LoadActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ Вход по сохранённым учётным данным
-    private fun tryLoginWithSavedCredentials(prefs: SharedPreferences) {
+    /**
+     * Вход по сохранённым логину и паролю
+     */
+    private fun tryLoginWithSavedCredentials() {
         val phoneNumber = prefs.getString("user_phone", null)
         val password = prefs.getString("user_password", null)
 
-        if (!phoneNumber.isNullOrEmpty() && !password.isNullOrEmpty()) {
-            println("🔑 Вход по сохранённым учётным данным...")
-            lifecycleScope.launch {
-                val result = authRepository.login(phoneNumber, password)
+        if (phoneNumber.isNullOrEmpty() || password.isNullOrEmpty()) {
+            println("⚠️ Нет сохранённых учётных данных")
+            goToEntry()
+            return
+        }
 
-                result.onSuccess { response ->
-                    val accessToken = response.accessToken
-                    val refreshToken = response.refreshToken
+        println("🔑 Вход по сохранённым данным...")
 
-                    if (!accessToken.isNullOrEmpty() && !refreshToken.isNullOrEmpty()) {
-                        // Сохраняем токены
-                        AuthInterceptor.saveTokens(accessToken, refreshToken)
-                        // Сохраняем данные пользователя
-                        saveUserData(accessToken, phoneNumber, response)
-                        println("✅ Успешный вход по учётным данным")
-                        goToMainPage()
-                    } else {
-                        println("⚠️ Токены не получены при входе")
-                        goToEntry()
-                    }
-                }
+        lifecycleScope.launch {
+            val result = authRepository.login(phoneNumber, password)
 
-                result.onFailure { error ->
-                    println("❌ Ошибка входа: ${error.message}")
-                    Toast.makeText(
-                        this@LoadActivity,
-                        "❌ Ошибка авто-входа: ${error.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+            result.onSuccess { response ->
+                if (!response.accessToken.isNullOrEmpty() && !response.refreshToken.isNullOrEmpty()) {
+                    AuthInterceptor.saveTokens(response.accessToken!!, response.refreshToken!!)
+                    saveUserData(response.accessToken!!)
+                    println("✅ Успешный вход")
+                    goToMainPage()
+                } else {
+                    println("⚠️ Токены не получены")
                     goToEntry()
                 }
             }
-        } else {
-            // Нет сохранённых учётных данных
-            println("⚠️ Нет сохранённых учётных данных")
-            goToEntry()
+
+            result.onFailure { error ->
+                println("❌ Ошибка входа: ${error.message}")
+                goToEntry()
+            }
         }
     }
 
-    private fun saveUserData(token: String, phoneNumber: String, response: AuthResponse) {
-        val prefs = getSharedPreferences("auth_prefs", MODE_PRIVATE)
-        val claims = JwtDecoder.decode(token)
+    /**
+     * Сохранение данных пользователя после успешной авторизации
+     */
+    private fun saveUserData(accessToken: String) {
+        val claims = JwtDecoder.decode(accessToken)
 
         prefs.edit().apply {
             putString("user_id", claims["nameid"]?.toString() ?: "")
-            putString("user_name", claims["unique_name"]?.toString() ?: "Не указано")
-            putString("user_phone", phoneNumber)
-            putString("user_role", claims["role"]?.toString() ?: "Пользователь")
+            putString("user_name", claims["unique_name"]?.toString() ?: "Пользователь")
+            putString("user_role", claims["role"]?.toString() ?: "DefaultUser")
             putBoolean("remember_me", true)
             apply()
         }
     }
 
-    // Переход на главную
+    // ==================== НАВИГАЦИЯ ====================
+
     private fun goToMainPage() {
-        val intent = Intent(this@LoadActivity, MainPage::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
+        Intent(this, MainPage::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(this)
+        }
         finish()
     }
 
-    // Переход на экран входа
     private fun goToEntry() {
-        val intent = Intent(this@LoadActivity, Entry::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
+        // ✅ Очищаем токены при переходе на вход
+        AuthInterceptor.clearTokens()
+
+        Intent(this, Entry::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(this)
+        }
         finish()
     }
 }

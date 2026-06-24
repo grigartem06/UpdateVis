@@ -11,7 +11,8 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
-    private const val BASE_URL = "http://btpit-ypk-api.somee.com/"
+    //private const val BASE_URL = "http://btpit-ypk-api.somee.com/"
+    private const val BASE_URL = "http://ivanfaue.beget.tech/"
 
     private lateinit var authInterceptor: AuthInterceptor
     private lateinit var refreshInterceptor: RefreshInterceptor

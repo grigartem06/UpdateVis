@@ -1,6 +1,6 @@
 package com.example.upk_btpi.Models.Order
 
-import com.example.upk_btpi.Models.Order.OrderDto
+import OrderDto
 import com.google.gson.annotations.SerializedName
 
 data class OrdersResponse(

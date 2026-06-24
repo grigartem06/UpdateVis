@@ -30,7 +30,6 @@
             android:ems="10"
             android:inputType="text"
             android:minHeight="48dp"
-            android:text="Name"
             android:visibility="gone"/>
 
         <TextView
@@ -54,7 +53,7 @@
             android:id="@+id/textViewUserName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="userName"
+            android:text=""
             android:textSize="16sp"/>
 
         <ImageView

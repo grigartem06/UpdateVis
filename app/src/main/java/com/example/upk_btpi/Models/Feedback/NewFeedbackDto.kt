@@ -5,12 +5,11 @@ import okhttp3.MultipartBody
 import java.io.File
 
 data class NewFeedbackDto(
-    @SerializedName("Comment")
-    val Comment: String,
+    @SerializedName("comment")
+    val comment: String,
 
-    @SerializedName("Raiting")
-    val Raiting: Int,
+    @SerializedName("raiting")
+    val raiting: Int
 
-    @SerializedName("Image")
-    val Image: MultipartBody.Part?= null
+
 )

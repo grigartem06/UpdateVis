@@ -1,12 +1,12 @@
 package com.example.upk_btpi.Adapters
 
+import ProductDto
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
-import com.example.upk_btpi.Models.Product.ProductDto
 import com.example.upk_btpi.databinding.ItemProductBinding
 import java.security.PrivateKey
 

@@ -8,6 +8,16 @@
     android:background="#F8F9FA"
     tools:context=".ProfileFragment">
 
+    <!-- 🔄 Индикатор загрузки (поверх всего) -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:indeterminate="true"
+        style="?android:attr/progressBarStyleLarge" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -16,7 +26,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="20dp">
 
@@ -258,6 +268,11 @@
                 android:scrollbarStyle="outsideOverlay"
                 android:fadeScrollbars="true"
                 android:elevation="2dp" />
+
+            <!-- Отступ внизу -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="40dp" />
 
         </LinearLayout>
     </ScrollView>

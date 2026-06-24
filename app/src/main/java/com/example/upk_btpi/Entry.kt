@@ -1,15 +1,15 @@
 package com.example.upk_btpi
 
+import UserDto
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.upk_btpi.Models.Auth.AuthResponse
-import com.example.upk_btpi.Retrofit.AuthInterceptor  // ← Импортируем
+import com.example.upk_btpi.Retrofit.AuthInterceptor
 import com.example.upk_btpi.Retrofit.AuthRepository
-import com.example.upk_btpi.Utils.JwtDecoder
+import com.example.upk_btpi.Utils.ErrorHandler
 import com.example.upk_btpi.databinding.ActivityEntryBinding
 import kotlinx.coroutines.launch
 
@@ -20,14 +20,17 @@ class Entry : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         binding = ActivityEntryBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Переход на регистрацию
         binding.buttonGoToRegistrtion.setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java)) // ← Исправьте имя активности
+            startActivity(Intent(this, MainActivity::class.java))
             finish()
         }
 
+        // Кнопка входа
         binding.buttonInput.setOnClickListener {
             val phoneNumber = binding.editTextText2.text.toString().trim()
             val password = binding.editTextTextPassword3.text.toString()
@@ -41,74 +44,103 @@ class Entry : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            LogIn(phoneNumber, password, binding.switch1.isChecked)
+            performLogin(phoneNumber, password, binding.switch1.isChecked)
         }
     }
 
-    private fun LogIn(phoneNumber: String, password: String, rememberMe: Boolean) {
+    /**
+     * Выполняет вход: login → получение данных пользователя → сохранение → переход
+     */
+    private fun performLogin(phoneNumber: String, password: String, rememberMe: Boolean) {
         binding.buttonInput.isEnabled = false
         binding.buttonInput.text = "Вход..."
 
         lifecycleScope.launch {
-            val result = authRepository.login(phoneNumber, password)
+            // 🔹 Шаг 1: Вход (получаем токены)
+            val loginResult = authRepository.login(phoneNumber, password)
 
-            result.onSuccess { response ->
-                val accessToken = response.accessToken
-                val refreshToken = response.refreshToken
+            loginResult.onSuccess { authResponse ->
+                // ✅ Сохраняем токены
+                AuthInterceptor.saveTokens(
+                    authResponse.accessToken ?: "",
+                    authResponse.refreshToken ?: ""
+                )
 
-                if (!accessToken.isNullOrEmpty() && !refreshToken.isNullOrEmpty()) {
+                // 🔹 Шаг 2: Получаем данные пользователя через API
+                val userResult = authRepository.getCurrentUser()
 
-                    // ✅ Проверка: читаем сохранённые токены
-                    val savedAccess = AuthInterceptor.getAccessToken()
-                    val savedRefresh = AuthInterceptor.getRefreshToken()
-                    println("💾 Сохранено: access=${savedAccess != null}, refresh=${savedRefresh != null}")
-                    // ✅ Сохраняем токены ТОЛЬКО если "Запомнить меня" включен
-                    //if (rememberMe) { AuthInterceptor.saveTokens(accessToken, refreshToken) }
+                userResult.onSuccess { user ->
+                    // ✅ Сохраняем данные пользователя и учётные данные (если нужно)
+                    saveUserData(user, phoneNumber, password, rememberMe)
 
-                    AuthInterceptor.saveTokens(accessToken, refreshToken)
-
-                    // Сохраняем данные пользователя
-                    saveUserData(response, phoneNumber, password,rememberMe)
-
-                    // Переход на главную
+                    // 🔹 Шаг 3: Переход на главный экран
                     val intent = Intent(this@Entry, MainPage::class.java)
                     startActivity(intent)
                     finish()
-                } else {
-                    Toast.makeText(this@Entry, "⚠️ Токены не получены", Toast.LENGTH_SHORT).show()
-                    binding.buttonInput.isEnabled = true
-                    binding.buttonInput.text = "Войти"
+                }
+
+                userResult.onFailure { error ->
+                    println("❌ Ошибка получения данных пользователя: ${error.message}")
+                    ErrorHandler.showDialog(
+                        context = this@Entry,
+                        title = "Ошибка",
+                        message = "Не удалось получить данные профиля: ${error.message}"
+                    )
+                    resetLoginButton()
                 }
             }
 
-            result.onFailure { error ->
-                val errorMessage = error.message ?: "Неизвестная ошибка"
-                Toast.makeText(this@Entry, "❌ ошибка входа", Toast.LENGTH_LONG).show()
-                binding.buttonInput.isEnabled = true
-                binding.buttonInput.text = "Войти"
+            loginResult.onFailure { error ->
+                ErrorHandler.showDialog(
+                    context = this@Entry,
+                    title = "Ошибка входа",
+                    message = error.message ?: "Не удалось войти в аккаунт"
+                )
+                resetLoginButton()
             }
         }
     }
 
-    private fun saveUserData(response: AuthResponse, phoneNumber: String, password: String, rememberMe: Boolean) {
+    /**
+     * Сохранение данных пользователя в SharedPreferences
+     */
+    private fun saveUserData(user: UserDto, phoneNumber: String, password: String, rememberMe: Boolean) {
         val prefs = getSharedPreferences("auth_prefs", MODE_PRIVATE)
-        val claims = JwtDecoder.decode(response.accessToken!!)
 
         prefs.edit().apply {
-            putString("user_id", claims["nameid"]?.toString() ?: "")
-            putString("user_name", claims["unique_name"]?.toString() ?: "Пользователь")
-            putString("user_phone", phoneNumber)
-            putString("user_role", claims["role"]?.toString() ?: "DefaultUser")
+            // ✅ ОБЯЗАТЕЛЬНО: сохраняем user_id (этот ключ читает ProfileFragment)
+            putString("user_id", user.id)
 
-            // ✅ СОХРАНЯЕМ ПАРОЛЬ ТОЛЬКО ЕСЛИ "ЗАПОМНИТЬ МЕНЯ" ВКЛЮЧЁН
+            println("🔍 Сохранение данных:")
+            println("   user.id = ${user.id}")
+            println("   user.fullName = ${user.fullName}")
+
+            // ✅ Сохраняем остальные данные
+            putString("user_name", user.fullName ?: "Пользователь")
+            putString("user_phone", user.phoneNumber ?: phoneNumber)
+            putString("user_role", user.role ?: "DefaultUser")
+            putString("user_info", user.userInfo ?: "")
+            putString("user_avatar", user.avatarUrl ?: "")
+
+            // ✅ Функция rememberMe
             if (rememberMe) {
                 putBoolean("remember_me", true)
-                putString("user_password", password) // ⚠️ Или храните зашифрованный пароль
+                putString("user_password", password)
             } else {
                 putBoolean("remember_me", false)
                 remove("user_password")
             }
-            apply()
+            apply()  // ✅ ОБЯЗАТЕЛЬНО: сохраняет изменения!
         }
+
+        println("📦 Данные сохранены: user_id=${user.id}, role=${user.role}")
+    }
+
+    /**
+     * Сброс кнопки входа в исходное состояние
+     */
+    private fun resetLoginButton() {
+        binding.buttonInput.isEnabled = true
+        binding.buttonInput.text = "Войти"
     }
 }
